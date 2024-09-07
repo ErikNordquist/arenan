@@ -10,6 +10,10 @@ function Home({ character, onMenuSelect }: Props) {
   const nextLevelExperience = experienceForNextLevel(character.level);
   const experienceToNextLevel = nextLevelExperience - character.experience;
 
+  const calculateCharacterHealth = (healthSkill: number) => {
+    return healthSkill * 10;
+  };
+
   return (
     <div>
       <h2>Welcome Home, {character.name}!</h2>
@@ -18,6 +22,7 @@ function Home({ character, onMenuSelect }: Props) {
       <p>Level: {character.level}</p>
       <p>Experience: {character.experience}</p>
       <p>Experience to next level: {experienceToNextLevel}</p>
+      <p>Health: {calculateCharacterHealth(character.skills.health)}</p>
       <h3>Skills:</h3>
       <ul>
         {Object.entries(character.skills).map(([skillName, value]) => (

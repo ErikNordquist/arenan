@@ -69,11 +69,15 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
     return `${action}, ${impact}. ${reaction}. ${defender} takes ${damage} damage and has ${remainingHealth} health remaining.`;
   };
 
+  const calculateCharacterHealth = (healthSkill: number) => {
+    return healthSkill * 10;
+  };
+
   const fight = () => {
     if (!selectedMonster) return;
 
     let monsterHealth = selectedMonster.health;
-    let characterHealth = character.skills.health * 10;
+    let characterHealth = calculateCharacterHealth(character.skills.health);
     let log: string[] = [];
     let round = 1;
 
@@ -132,6 +136,10 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
               <p>Attack: {selectedMonster.attack}</p>
               <p>Defense: {selectedMonster.defense}</p>
               <p>Challenge Level Range: {selectedMonster.minLevel}-{selectedMonster.maxLevel}</p>
+              <h4>Your Character</h4>
+              <p>Health: {calculateCharacterHealth(character.skills.health)}</p>
+              <p>Strength: {character.skills.strength}</p>
+              <p>Agility: {character.skills.agility}</p>
               <button onClick={fight}>Start Fight</button>
             </div>
           )}
