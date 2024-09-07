@@ -10,8 +10,8 @@ function Home({ character, onMenuSelect }: Props) {
   const nextLevelExperience = experienceForNextLevel(character.level);
   const experienceToNextLevel = nextLevelExperience - character.experience;
 
-  const calculateCharacterHealth = (healthSkill: number) => {
-    return healthSkill * 10;
+  const calculateCharacterHealth = (healthAttribute: number) => {
+    return healthAttribute * 10;
   };
 
   return (
@@ -22,13 +22,24 @@ function Home({ character, onMenuSelect }: Props) {
       <p>Level: {character.level}</p>
       <p>Experience: {character.experience}</p>
       <p>Experience to next level: {experienceToNextLevel}</p>
-      <p>Health: {calculateCharacterHealth(character.skills.health)}</p>
+      
+      <h3>Attributes:</h3>
+      <ul>
+        {Object.entries(character.attributes).map(([attrName, value]) => (
+          <li key={attrName}>
+            {attrName.charAt(0).toUpperCase() + attrName.slice(1)}: {value}
+            {attrName === 'health' && ` (Total HP: ${calculateCharacterHealth(value)})`}
+          </li>
+        ))}
+      </ul>
+
       <h3>Skills:</h3>
       <ul>
         {Object.entries(character.skills).map(([skillName, value]) => (
           <li key={skillName}>{skillName.charAt(0).toUpperCase() + skillName.slice(1)}: {value}</li>
         ))}
       </ul>
+      
       <h3>Menu</h3>
       <div>
         <button onClick={() => onMenuSelect('fight')}>Fight Monsters</button>

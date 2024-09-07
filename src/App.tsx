@@ -3,7 +3,7 @@ import CharacterCreation from './components/CharacterCreation';
 import SkillAllocation from './components/SkillAllocation';
 import Home from './components/Home';
 import MonsterFight from './components/MonsterFight';
-import { Character, Skills, calculateLevel } from './models/Character';
+import { Character, Skills, Attributes, calculateLevel } from './models/Character';
 
 function App() {
   const [character, setCharacter] = useState<Character | null>(null);
@@ -36,11 +36,12 @@ function App() {
     setGameStage('skillAllocation');
   };
 
-  const handleSkillAllocation = (skills: Skills) => {
+  const handleSkillAllocation = (skills: Skills, attributes: Attributes) => {
     if (character) {
       const fullCharacter: Character = {
         ...character,
         skills,
+        attributes,
         experience: 0,
         level: 1,
       };

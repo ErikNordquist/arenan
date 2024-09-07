@@ -3,9 +3,12 @@ export interface Skill {
   level: number;
 }
 
-export interface Skills {
+export interface Attributes {
   health: number;
   mana: number;
+}
+
+export interface Skills {
   stamina: number;
   initiative: number;
   intelligence: number;
@@ -19,6 +22,7 @@ export interface Character {
   level: number;
   experience: number;
   profilePicture: string;
+  attributes: Attributes;
   skills: Skills;
 }
 
