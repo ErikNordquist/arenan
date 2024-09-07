@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Character } from '../models/Character';
 import { Monster, monsters } from '../models/Monsters';
 
@@ -24,6 +24,16 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [fightLog, setFightLog] = useState<string[]>([]);
   const [isFighting, setIsFighting] = useState(false);
+  const [fightEnded, setFightEnded] = useState(false);
+  const [availableMonsters, setAvailableMonsters] = useState<Monster[]>([]);
+
+  useEffect(() => {
+    // Filter monsters based on character level
+    const filtered = monsters.filter(monster => 
+      character.level >= monster.minLevel - 1 && character.level <= monster.maxLevel + 1
+    );
+    setAvailableMonsters(filtered);
+  }, [character.level]);
 
   const selectMonster = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const monster = monsters.find(m => m.name === event.target.value);
@@ -97,6 +107,7 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
 
     setFightLog(log);
     setIsFighting(true);
+    setFightEnded(true);
   };
 
   return (
@@ -106,9 +117,9 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
         <div>
           <select onChange={selectMonster} value={selectedMonster?.name || ''}>
             <option value="">Select a monster</option>
-            {monsters.map((monster) => (
+            {availableMonsters.map((monster) => (
               <option key={monster.name} value={monster.name}>
-                {monster.name} (Level {monster.level})
+                {monster.name} (Level {monster.level}, Challenge: {monster.minLevel}-{monster.maxLevel})
               </option>
             ))}
           </select>
@@ -120,6 +131,7 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
               <p>Health: {selectedMonster.health}</p>
               <p>Attack: {selectedMonster.attack}</p>
               <p>Defense: {selectedMonster.defense}</p>
+              <p>Challenge Level Range: {selectedMonster.minLevel}-{selectedMonster.maxLevel}</p>
               <button onClick={fight}>Start Fight</button>
             </div>
           )}
@@ -127,10 +139,12 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
       ) : (
         <div>
           <h3>Battle Results</h3>
-          <div style={{ whiteSpace: 'pre-line', marginTop: '20px' }}>
-            {fightLog.join('\n')}
+          <div style={{ whiteSpace: 'pre-line', marginTop: '20px', maxHeight: '400px', overflowY: 'auto' }}>
+            {fightLog.map((log, index) => (
+              <p key={index}>{log}</p>
+            ))}
           </div>
-          <button onClick={onReturnHome}>Return Home</button>
+          {fightEnded && <button onClick={onReturnHome}>Return Home</button>}
         </div>
       )}
     </div>

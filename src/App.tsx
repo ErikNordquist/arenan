@@ -65,7 +65,8 @@ function App() {
         experience: newExperience,
         level: newLevel,
       });
-      setGameStage('home');
+      // Remove or comment out the following line:
+      // setGameStage('home');
     }
   };
 
