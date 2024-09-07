@@ -1,6 +1,6 @@
 import React from 'react';
 import { Character, experienceForNextLevel } from '../models/Character';
-import { Weapon, Armor } from '../models/Equipment';
+import { Equipment, EquipmentSlot } from '../models/Equipment';
 
 interface Props {
   character: Character;
@@ -11,8 +11,11 @@ function Home({ character, onMenuSelect }: Props) {
   const nextLevelExperience = experienceForNextLevel(character.level);
   const experienceToNextLevel = nextLevelExperience - character.experience;
 
-  const calculateCharacterHealth = (healthAttribute: number) => {
-    return healthAttribute * 10;
+  const renderEquipmentSlot = (slot: EquipmentSlot) => {
+    const item = character.equipment[slot];
+    return (
+      <p>{slot.charAt(0).toUpperCase() + slot.slice(1)}: {item ? item.name : 'Empty'}</p>
+    );
   };
 
   return (
@@ -23,13 +26,13 @@ function Home({ character, onMenuSelect }: Props) {
       <p>Level: {character.level}</p>
       <p>Experience: {character.experience}</p>
       <p>Experience to next level: {experienceToNextLevel}</p>
+      <p>Health: {character.currentHealth} / {character.maxHealth}</p>
       
       <h3>Attributes:</h3>
       <ul>
         {Object.entries(character.attributes).map(([attrName, value]) => (
           <li key={attrName}>
             {attrName.charAt(0).toUpperCase() + attrName.slice(1)}: {value}
-            {attrName === 'health' && ` (Total HP: ${calculateCharacterHealth(value)})`}
           </li>
         ))}
       </ul>
@@ -42,8 +45,9 @@ function Home({ character, onMenuSelect }: Props) {
       </ul>
       
       <h3>Equipment:</h3>
-      <p>Weapon: {character.equipment.weapon ? character.equipment.weapon.name : 'None'}</p>
-      <p>Armor: {character.equipment.armor ? character.equipment.armor.name : 'None'}</p>
+      {Object.keys(character.equipment).map((slot) => 
+        renderEquipmentSlot(slot as EquipmentSlot)
+      )}
 
       <h3>Inventory:</h3>
       {character.inventory.length === 0 ? (

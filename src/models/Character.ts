@@ -29,6 +29,8 @@ export interface Character {
   equipment: Equipment;
   inventory: Inventory;
   gold: number;
+  currentHealth: number;
+  maxHealth: number;
 }
 
 export function calculateLevel(experience: number): number {
@@ -41,4 +43,8 @@ export function calculateLevel(experience: number): number {
 
 export function experienceForNextLevel(level: number): number {
   return Math.floor(50/3 * (Math.pow(level, 3) - 6 * Math.pow(level, 2) + 17 * level - 12));
+}
+
+export function calculateMaxHealth(healthAttribute: number): number {
+  return healthAttribute * 10;
 }

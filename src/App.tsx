@@ -8,14 +8,15 @@ import MyCharacters from './components/MyCharacters';
 import Tavern from './components/Tavern';
 import Blacksmith from './components/Blacksmith';
 import Workshop from './components/Workshop';
-import { Character, Skills, Attributes, calculateLevel } from './models/Character';
-import { Weapon, Armor, InventoryItem } from './models/Equipment';
+import { Character, Skills, Attributes, calculateLevel, calculateMaxHealth } from './models/Character';
+import { Weapon, Armor, Accessory, EquipmentSlot, InventoryItem } from './models/Equipment';
 
 function App() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [gameStage, setGameStage] = useState<'account' | 'creation' | 'skillAllocation' | 'home' | 'fight' | 'my-characters' | 'tavern' | 'blacksmith' | 'workshop'>('my-characters');
   const [selectedMenu, setSelectedMenu] = useState<string | null>(null);
+  const [healthRegenerationInterval, setHealthRegenerationInterval] = useState<number | null>(null);
 
   useEffect(() => {
     loadGame();
@@ -26,6 +27,20 @@ function App() {
       saveGame();
     }
   }, [characters, activeCharacter]);
+
+  useEffect(() => {
+    if (activeCharacter) {
+      const interval = window.setInterval(() => {
+        regenerateHealth();
+      }, 60000); // 60000 ms = 1 minute
+      setHealthRegenerationInterval(interval);
+    }
+    return () => {
+      if (healthRegenerationInterval) {
+        window.clearInterval(healthRegenerationInterval);
+      }
+    };
+  }, [activeCharacter]);
 
   const loadGame = () => {
     const savedCharacters = localStorage.getItem('characters');
@@ -62,12 +77,13 @@ function App() {
 
   const handleSkillAllocation = (skills: Skills, attributes: Attributes) => {
     if (activeCharacter) {
+      const maxHealth = calculateMaxHealth(attributes.health);
       const newCharacter: Character = {
         ...activeCharacter,
         skills,
         attributes,
-        experience: 0,
-        level: 1,
+        maxHealth,
+        currentHealth: maxHealth, // Set current health to max health
       };
       setActiveCharacter(newCharacter);
       setCharacters([...characters, newCharacter]);
@@ -108,15 +124,30 @@ function App() {
     }
   };
 
-  const handleFightEnd = (experienceGained: number) => {
+  const handleFightEnd = (experienceGained: number, remainingHealth: number) => {
     if (activeCharacter) {
       const newExperience = activeCharacter.experience + experienceGained;
       const newLevel = calculateLevel(newExperience);
-      setActiveCharacter({
-        ...activeCharacter,
+      setActiveCharacter(prevCharacter => ({
+        ...prevCharacter!,
         experience: newExperience,
         level: newLevel,
-      });
+        currentHealth: remainingHealth
+      }));
+      // Remove or comment out the following line:
+      // setGameStage('home');
+    }
+  };
+
+  const regenerateHealth = () => {
+    if (activeCharacter) {
+      const regenerationAmount = Math.floor(activeCharacter.maxHealth * 0.2);
+      const newHealth = Math.min(activeCharacter.maxHealth, activeCharacter.currentHealth + regenerationAmount);
+      
+      setActiveCharacter(prevCharacter => ({
+        ...prevCharacter!,
+        currentHealth: newHealth
+      }));
     }
   };
 
@@ -136,19 +167,14 @@ function App() {
     }
   };
 
-  const handlePurchase = (item: Weapon | Armor) => {
+  const handlePurchase = (item: Weapon | Armor | Accessory, slot: EquipmentSlot) => {
     if (activeCharacter) {
       const updatedCharacter = { ...activeCharacter };
       updatedCharacter.gold -= item.value;
-
-      if ('damage' in item) {
-        updatedCharacter.equipment.weapon = item;
-      } else {
-        updatedCharacter.equipment.armor = item;
-      }
+      updatedCharacter.equipment[slot] = item as any; // Type assertion to avoid index error
 
       const inventoryItem: InventoryItem = {
-        type: 'damage' in item ? 'weapon' : 'armor',
+        type: 'damage' in item ? 'weapon' : ('defense' in item ? 'armor' : 'accessory'),
         item,
         quantity: 1
       };

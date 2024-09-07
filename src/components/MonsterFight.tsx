@@ -4,7 +4,7 @@ import { Monster, monsters } from '../models/Monsters';
 
 interface Props {
   character: Character;
-  onFightEnd: (experienceGained: number) => void;
+  onFightEnd: (experienceGained: number, remainingHealth: number) => void;
   onReturnHome: () => void;
 }
 
@@ -71,15 +71,15 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
   };
 
   const calculateHealth = (entity: Character | Monster) => {
-    return entity.attributes.health * 10;
+    return 'maxHealth' in entity ? entity.maxHealth : entity.attributes.health * 10;
   };
 
   const fight = () => {
     if (!selectedMonster) return;
 
     let monsterHealth = calculateHealth(selectedMonster);
-    let characterHealth = calculateHealth(character);
-    const forfeitThreshold = characterHealth * (forfeitPercentage / 100);
+    let characterHealth = character.currentHealth;
+    const forfeitThreshold = character.maxHealth * (forfeitPercentage / 100);
     let characterStamina = character.skills.stamina * 2;
     let monsterStamina = selectedMonster.skills.stamina * 2;
     let log: string[] = [];
@@ -165,7 +165,7 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
         break;
       }
       if (characterHealth <= forfeitThreshold) {
-        log.push(`\n${character.name}'s health has fallen below the forfeit threshold of ${forfeitThreshold.toFixed(0)}!`);
+        log.push(`\n${character.name}'s health has fallen below the forfeit threshold of ${forfeitThreshold.toFixed(0)}. ${selectedMonster.name} is declared the winner.`);
         break;
       }
 
@@ -175,7 +175,7 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
     // Determine fight outcome
     if (monsterHealth <= 0 || monsterStamina <= 0) {
       log.push(`\nWith a final, decisive blow, ${character.name} emerges victorious over ${selectedMonster.name}! The crowd erupts in cheers as ${character.name} stands triumphant in the arena.`);
-      onFightEnd(selectedMonster.experience);
+      onFightEnd(selectedMonster.experience, characterHealth);
     } else if (characterHealth <= 0 || characterHealth <= forfeitThreshold || characterStamina <= 0) {
       if (characterHealth <= forfeitThreshold) {
         log.push(`\n${character.name} forfeits the fight as their health has fallen below ${forfeitThreshold.toFixed(0)}. ${selectedMonster.name} is declared the winner.`);
@@ -184,7 +184,7 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
       } else {
         log.push(`\nDespite a valiant effort, ${character.name} falls to the mighty ${selectedMonster.name}. The arena grows silent as the battle concludes.`);
       }
-      onFightEnd(0);
+      onFightEnd(0, characterHealth);
     }
 
     setFightLog(log);
@@ -246,7 +246,14 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
       ) : (
         <div>
           <h3>Battle Results</h3>
-          <div style={{ whiteSpace: 'pre-line', marginTop: '20px', maxHeight: '400px', overflowY: 'auto' }}>
+          <div style={{ 
+            whiteSpace: 'pre-line', 
+            marginTop: '20px', 
+            maxHeight: '400px', 
+            overflowY: 'auto',
+            border: '1px solid #ccc',
+            padding: '10px'
+          }}>
             {fightLog.map((log, index) => (
               <p key={index}>{log}</p>
             ))}

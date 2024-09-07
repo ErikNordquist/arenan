@@ -37,6 +37,19 @@ const raceProfiles = {
   ],
 };
 
+const initialEquipment: Equipment = {
+  helmet: null,
+  necklace: null,
+  armor: null,
+  legs: null,
+  boots: null,
+  weapon: null,
+  shield: null,
+  trinket: null,
+  ring1: null,
+  ring2: null,
+};
+
 function CharacterCreation({ onBasicInfoComplete }: Props) {
   const [name, setName] = useState('');
   const [race, setRace] = useState('');
@@ -54,13 +67,20 @@ function CharacterCreation({ onBasicInfoComplete }: Props) {
     e.preventDefault();
     if (!name || !race || !profilePicture) return;
 
+    const initialHealth = 50; // or any other starting value
     const basicInfo: Partial<Character> = {
       name,
       race,
       profilePicture,
-      equipment: { weapon: null, armor: null },
+      equipment: initialEquipment,
       inventory: [],
-      gold: 100, // Starting gold
+      gold: 100,
+      currentHealth: initialHealth,
+      maxHealth: initialHealth,
+      level: 1,
+      experience: 0,
+      attributes: { health: 5, mana: 5 }, // Add initial attributes
+      skills: { stamina: 5, initiative: 5, intelligence: 5, strength: 5, agility: 5 }, // Add initial skills
     };
     onBasicInfoComplete(basicInfo);
   };
