@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Character } from '../models/Character';
+import { Equipment, Inventory } from '../models/Equipment';
 
 interface Props {
   onBasicInfoComplete: (basicInfo: Partial<Character>) => void;
@@ -57,6 +58,9 @@ function CharacterCreation({ onBasicInfoComplete }: Props) {
       name,
       race,
       profilePicture,
+      equipment: { weapon: null, armor: null },
+      inventory: [],
+      gold: 100, // Starting gold
     };
     onBasicInfoComplete(basicInfo);
   };

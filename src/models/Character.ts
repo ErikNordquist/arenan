@@ -1,3 +1,5 @@
+import { Equipment, Inventory } from './Equipment';
+
 export interface Skill {
   name: string;
   level: number;
@@ -24,6 +26,9 @@ export interface Character {
   profilePicture: string;
   attributes: Attributes;
   skills: Skills;
+  equipment: Equipment;
+  inventory: Inventory;
+  gold: number;
 }
 
 export function calculateLevel(experience: number): number {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Character, experienceForNextLevel } from '../models/Character';
+import { Weapon, Armor } from '../models/Equipment';
 
 interface Props {
   character: Character;
@@ -40,6 +41,25 @@ function Home({ character, onMenuSelect }: Props) {
         ))}
       </ul>
       
+      <h3>Equipment:</h3>
+      <p>Weapon: {character.equipment.weapon ? character.equipment.weapon.name : 'None'}</p>
+      <p>Armor: {character.equipment.armor ? character.equipment.armor.name : 'None'}</p>
+
+      <h3>Inventory:</h3>
+      {character.inventory.length === 0 ? (
+        <p>Your inventory is empty.</p>
+      ) : (
+        <ul>
+          {character.inventory.map((item, index) => (
+            <li key={index}>
+              {item.item.name} (Quantity: {item.quantity})
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p>Gold: {character.gold}</p>
+
       <h3>Menu</h3>
       <div>
         <button onClick={() => onMenuSelect('fight')}>Fight Monsters</button>

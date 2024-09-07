@@ -26,6 +26,7 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
   const [isFighting, setIsFighting] = useState(false);
   const [fightEnded, setFightEnded] = useState(false);
   const [availableMonsters, setAvailableMonsters] = useState<Monster[]>([]);
+  const [forfeitPercentage, setForfeitPercentage] = useState(0);
 
   useEffect(() => {
     // Filter monsters based on character level
@@ -69,43 +70,120 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
     return `${action}, ${impact}. ${reaction}. ${defender} takes ${damage} damage and has ${remainingHealth} health remaining.`;
   };
 
-  const calculateCharacterHealth = (healthAttribute: number) => {
-    return healthAttribute * 10;
+  const calculateHealth = (entity: Character | Monster) => {
+    return entity.attributes.health * 10;
   };
 
   const fight = () => {
     if (!selectedMonster) return;
 
-    let monsterHealth = selectedMonster.health;
-    let characterHealth = calculateCharacterHealth(character.attributes.health);
+    let monsterHealth = calculateHealth(selectedMonster);
+    let characterHealth = calculateHealth(character);
+    const forfeitThreshold = characterHealth * (forfeitPercentage / 100);
+    let characterStamina = character.skills.stamina * 2;
+    let monsterStamina = selectedMonster.skills.stamina * 2;
     let log: string[] = [];
     let round = 1;
 
     log.push(`The battle between ${character.name} and ${selectedMonster.name} begins in the grand arena!`);
+    log.push(`${character.name} will forfeit if their health falls below ${forfeitThreshold.toFixed(0)} (${forfeitPercentage}% of max health).`);
 
-    while (monsterHealth > 0 && characterHealth > 0) {
+    while (true) {
       log.push(`\nRound ${round}:`);
 
-      // Character attacks
-      const characterDamage = Math.max(0, character.skills.strength - selectedMonster.defense);
-      monsterHealth -= characterDamage;
-      log.push(generateCommentary(character.name, selectedMonster.name, characterDamage, Math.max(0, monsterHealth)));
+      // Check for exhaustion
+      if (characterStamina <= 0) {
+        log.push(`${character.name} becomes exhausted and can no longer fight!`);
+        break;
+      }
+      if (monsterStamina <= 0) {
+        log.push(`${selectedMonster.name} becomes exhausted and can no longer fight!`);
+        break;
+      }
 
-      if (monsterHealth <= 0) break;
+      // Determine who acts first based on initiative
+      const characterInitiativeRoll = Math.random() * character.skills.initiative;
+      const monsterInitiativeRoll = Math.random() * selectedMonster.skills.initiative;
 
-      // Monster attacks
-      const monsterDamage = Math.max(0, selectedMonster.attack - character.skills.agility);
-      characterHealth -= monsterDamage;
-      log.push(generateCommentary(selectedMonster.name, character.name, monsterDamage, Math.max(0, characterHealth)));
+      if (characterInitiativeRoll >= monsterInitiativeRoll) {
+        // Character attacks
+        const hitChance = 0.5 + (character.skills.agility - selectedMonster.skills.agility) * 0.05;
+        if (Math.random() < hitChance) {
+          const characterDamage = Math.max(1, character.skills.strength - selectedMonster.skills.strength);
+          monsterHealth -= characterDamage;
+          log.push(generateCommentary(character.name, selectedMonster.name, characterDamage, Math.max(0, monsterHealth)));
+        } else {
+          log.push(`${character.name}'s attack misses!`);
+        }
+
+        // Monster attacks if still alive
+        if (monsterHealth > 0) {
+          const monsterHitChance = 0.5 + (selectedMonster.skills.agility - character.skills.agility) * 0.05;
+          if (Math.random() < monsterHitChance) {
+            const monsterDamage = Math.max(1, selectedMonster.skills.strength - character.skills.strength);
+            characterHealth -= monsterDamage;
+            log.push(generateCommentary(selectedMonster.name, character.name, monsterDamage, Math.max(0, characterHealth)));
+          } else {
+            log.push(`${selectedMonster.name}'s attack misses!`);
+          }
+        }
+      } else {
+        // Monster attacks first
+        const monsterHitChance = 0.5 + (selectedMonster.skills.agility - character.skills.agility) * 0.05;
+        if (Math.random() < monsterHitChance) {
+          const monsterDamage = Math.max(1, selectedMonster.skills.strength - character.skills.strength);
+          characterHealth -= monsterDamage;
+          log.push(generateCommentary(selectedMonster.name, character.name, monsterDamage, Math.max(0, characterHealth)));
+        } else {
+          log.push(`${selectedMonster.name}'s attack misses!`);
+        }
+
+        // Character attacks if still alive
+        if (characterHealth > 0) {
+          const hitChance = 0.5 + (character.skills.agility - selectedMonster.skills.agility) * 0.05;
+          if (Math.random() < hitChance) {
+            const characterDamage = Math.max(1, character.skills.strength - selectedMonster.skills.strength);
+            monsterHealth -= characterDamage;
+            log.push(generateCommentary(character.name, selectedMonster.name, characterDamage, Math.max(0, monsterHealth)));
+          } else {
+            log.push(`${character.name}'s attack misses!`);
+          }
+        }
+      }
+
+      // Reduce stamina
+      characterStamina--;
+      monsterStamina--;
+
+      // Check for fight end conditions
+      if (monsterHealth <= 0) {
+        log.push(`\n${selectedMonster.name} has been defeated!`);
+        break;
+      }
+      if (characterHealth <= 0) {
+        log.push(`\n${character.name} has been defeated!`);
+        break;
+      }
+      if (characterHealth <= forfeitThreshold) {
+        log.push(`\n${character.name}'s health has fallen below the forfeit threshold of ${forfeitThreshold.toFixed(0)}!`);
+        break;
+      }
 
       round++;
     }
 
-    if (characterHealth > 0) {
+    // Determine fight outcome
+    if (monsterHealth <= 0 || monsterStamina <= 0) {
       log.push(`\nWith a final, decisive blow, ${character.name} emerges victorious over ${selectedMonster.name}! The crowd erupts in cheers as ${character.name} stands triumphant in the arena.`);
       onFightEnd(selectedMonster.experience);
-    } else {
-      log.push(`\nDespite a valiant effort, ${character.name} falls to the mighty ${selectedMonster.name}. The arena grows silent as the battle concludes.`);
+    } else if (characterHealth <= 0 || characterHealth <= forfeitThreshold || characterStamina <= 0) {
+      if (characterHealth <= forfeitThreshold) {
+        log.push(`\n${character.name} forfeits the fight as their health has fallen below ${forfeitThreshold.toFixed(0)}. ${selectedMonster.name} is declared the winner.`);
+      } else if (characterStamina <= 0) {
+        log.push(`\n${character.name} is too exhausted to continue. ${selectedMonster.name} is declared the winner.`);
+      } else {
+        log.push(`\nDespite a valiant effort, ${character.name} falls to the mighty ${selectedMonster.name}. The arena grows silent as the battle concludes.`);
+      }
       onFightEnd(0);
     }
 
@@ -132,10 +210,35 @@ function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
               <h3>Selected Monster: {selectedMonster.name}</h3>
               <p>{monsterDescriptions[selectedMonster.name]}</p>
               <p>Level: {selectedMonster.level}</p>
-              <p>Health: {selectedMonster.health}</p>
-              <p>Attack: {selectedMonster.attack}</p>
-              <p>Defense: {selectedMonster.defense}</p>
+              <p>Health: {calculateHealth(selectedMonster)}</p>
+              <p>Attributes:</p>
+              <ul>
+                {Object.entries(selectedMonster.attributes).map(([key, value]) => (
+                  <li key={key}>{key}: {value}</li>
+                ))}
+              </ul>
+              <p>Skills:</p>
+              <ul>
+                {Object.entries(selectedMonster.skills).map(([key, value]) => (
+                  <li key={key}>{key}: {value}</li>
+                ))}
+              </ul>
               <p>Challenge Level Range: {selectedMonster.minLevel}-{selectedMonster.maxLevel}</p>
+              <div>
+                <label htmlFor="forfeitPercentage">Forfeit Threshold: </label>
+                <select
+                  id="forfeitPercentage"
+                  value={forfeitPercentage}
+                  onChange={(e) => setForfeitPercentage(Number(e.target.value))}
+                >
+                  <option value={0}>No forfeit</option>
+                  {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((percent) => (
+                    <option key={percent} value={percent}>
+                      {percent}% of max health
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button onClick={fight}>Start Fight</button>
             </div>
           )}
