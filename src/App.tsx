@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
-// Comment out the Google OAuth import for now
-// import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import CharacterCreation from './components/CharacterCreation';
 import SkillAllocation from './components/SkillAllocation';
 import Home from './components/Home';
+import MonsterFight from './components/MonsterFight';
 import { Character, Skills, calculateLevel } from './models/Character';
 
-// Comment out the Google Client ID for now
-// const GOOGLE_CLIENT_ID = '484170023639-g2unv8c40i5005irg7g9ppv9ukchls0f.apps.googleusercontent.com';
-
 function App() {
-  // const [user, setUser] = useState<any>(null);
   const [character, setCharacter] = useState<Character | null>(null);
-  const [gameStage, setGameStage] = useState<'creation' | 'skillAllocation' | 'home'>('creation');
+  const [gameStage, setGameStage] = useState<'creation' | 'skillAllocation' | 'home' | 'fight'>('creation');
   const [selectedMenu, setSelectedMenu] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,7 +51,22 @@ function App() {
 
   const handleMenuSelect = (menu: string) => {
     setSelectedMenu(menu);
-    console.log(`Selected menu: ${menu}`);
+    if (menu === 'fight') {
+      setGameStage('fight');
+    }
+  };
+
+  const handleFightEnd = (experienceGained: number) => {
+    if (character) {
+      const newExperience = character.experience + experienceGained;
+      const newLevel = calculateLevel(newExperience);
+      setCharacter({
+        ...character,
+        experience: newExperience,
+        level: newLevel,
+      });
+      setGameStage('home');
+    }
   };
 
   const addExperience = (amount: number) => {
@@ -72,7 +82,6 @@ function App() {
   };
 
   return (
-    // Remove GoogleOAuthProvider wrapper
     <div className="App">
       <h1>React Role-Playing Game</h1>
       {gameStage === 'creation' && <CharacterCreation onBasicInfoComplete={handleBasicInfo} />}
@@ -82,7 +91,10 @@ function App() {
       {gameStage === 'home' && character && (
         <Home character={character} onMenuSelect={handleMenuSelect} />
       )}
-      {selectedMenu && <p>You selected: {selectedMenu}</p>}
+      {gameStage === 'fight' && character && (
+        <MonsterFight character={character} onFightEnd={handleFightEnd} />
+      )}
+      {selectedMenu && gameStage !== 'fight' && <p>You selected: {selectedMenu}</p>}
       {gameStage === 'home' && (
         <button onClick={() => addExperience(100)}>Gain 100 Experience</button>
       )}
