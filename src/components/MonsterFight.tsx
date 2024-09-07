@@ -11,37 +11,72 @@ function MonsterFight({ character, onFightEnd }: Props) {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [fightLog, setFightLog] = useState<string[]>([]);
 
-  const selectMonster = (monster: Monster) => {
-    setSelectedMonster(monster);
+  const selectMonster = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const monster = monsters.find(m => m.name === event.target.value);
+    setSelectedMonster(monster || null);
     setFightLog([]);
+  };
+
+  const generateCommentary = (attacker: string, defender: string, damage: number, remainingHealth: number): string => {
+    const actions = [
+      `${attacker} lunges forward with a powerful strike`,
+      `${attacker} executes a swift maneuver`,
+      `${attacker} unleashes a flurry of attacks`,
+      `${attacker} finds an opening in ${defender}'s defense`,
+    ];
+    const impacts = [
+      `landing a solid hit`,
+      `connecting with precision`,
+      `striking true`,
+      `dealing a significant blow`,
+    ];
+    const reactions = [
+      `${defender} staggers back`,
+      `${defender} winces in pain`,
+      `${defender} barely maintains their footing`,
+      `${defender} reels from the impact`,
+    ];
+
+    const action = actions[Math.floor(Math.random() * actions.length)];
+    const impact = impacts[Math.floor(Math.random() * impacts.length)];
+    const reaction = reactions[Math.floor(Math.random() * reactions.length)];
+
+    return `${action}, ${impact}. ${reaction}. ${defender} takes ${damage} damage and has ${remainingHealth} health remaining.`;
   };
 
   const fight = () => {
     if (!selectedMonster) return;
 
     let monsterHealth = selectedMonster.health;
-    let characterHealth = character.skills.health * 10; // Assuming each health point gives 10 HP
+    let characterHealth = character.skills.health * 10;
     let log: string[] = [];
+    let round = 1;
+
+    log.push(`The battle between ${character.name} and ${selectedMonster.name} begins in the grand arena!`);
 
     while (monsterHealth > 0 && characterHealth > 0) {
+      log.push(`\nRound ${round}:`);
+
       // Character attacks
       const characterDamage = Math.max(0, character.skills.strength - selectedMonster.defense);
       monsterHealth -= characterDamage;
-      log.push(`${character.name} deals ${characterDamage} damage to ${selectedMonster.name}`);
+      log.push(generateCommentary(character.name, selectedMonster.name, characterDamage, Math.max(0, monsterHealth)));
 
       if (monsterHealth <= 0) break;
 
       // Monster attacks
       const monsterDamage = Math.max(0, selectedMonster.attack - character.skills.agility);
       characterHealth -= monsterDamage;
-      log.push(`${selectedMonster.name} deals ${monsterDamage} damage to ${character.name}`);
+      log.push(generateCommentary(selectedMonster.name, character.name, monsterDamage, Math.max(0, characterHealth)));
+
+      round++;
     }
 
     if (characterHealth > 0) {
-      log.push(`${character.name} defeats ${selectedMonster.name}!`);
+      log.push(`\nWith a final, decisive blow, ${character.name} emerges victorious over ${selectedMonster.name}! The crowd erupts in cheers as ${character.name} stands triumphant in the arena.`);
       onFightEnd(selectedMonster.experience);
     } else {
-      log.push(`${character.name} was defeated by ${selectedMonster.name}.`);
+      log.push(`\nDespite a valiant effort, ${character.name} falls to the mighty ${selectedMonster.name}. The arena grows silent as the battle concludes.`);
       onFightEnd(0);
     }
 
@@ -52,11 +87,14 @@ function MonsterFight({ character, onFightEnd }: Props) {
     <div>
       <h2>Monster Fight</h2>
       <div>
-        {monsters.map((monster) => (
-          <button key={monster.name} onClick={() => selectMonster(monster)}>
-            Fight {monster.name} (Level {monster.level})
-          </button>
-        ))}
+        <select onChange={selectMonster} value={selectedMonster?.name || ''}>
+          <option value="">Select a monster</option>
+          {monsters.map((monster) => (
+            <option key={monster.name} value={monster.name}>
+              {monster.name} (Level {monster.level})
+            </option>
+          ))}
+        </select>
       </div>
       {selectedMonster && (
         <div>
@@ -68,10 +106,8 @@ function MonsterFight({ character, onFightEnd }: Props) {
           <button onClick={fight}>Start Fight</button>
         </div>
       )}
-      <div>
-        {fightLog.map((log, index) => (
-          <p key={index}>{log}</p>
-        ))}
+      <div style={{ whiteSpace: 'pre-line', marginTop: '20px' }}>
+        {fightLog.join('\n')}
       </div>
     </div>
   );
