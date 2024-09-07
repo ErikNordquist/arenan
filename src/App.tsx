@@ -69,6 +69,10 @@ function App() {
     }
   };
 
+  const handleReturnHome = () => {
+    setGameStage('home');
+  };
+
   const addExperience = (amount: number) => {
     if (character) {
       const newExperience = character.experience + amount;
@@ -92,7 +96,11 @@ function App() {
         <Home character={character} onMenuSelect={handleMenuSelect} />
       )}
       {gameStage === 'fight' && character && (
-        <MonsterFight character={character} onFightEnd={handleFightEnd} />
+        <MonsterFight 
+          character={character} 
+          onFightEnd={handleFightEnd} 
+          onReturnHome={handleReturnHome}
+        />
       )}
       {selectedMenu && gameStage !== 'fight' && <p>You selected: {selectedMenu}</p>}
       {gameStage === 'home' && (

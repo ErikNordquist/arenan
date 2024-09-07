@@ -5,16 +5,31 @@ import { Monster, monsters } from '../models/Monsters';
 interface Props {
   character: Character;
   onFightEnd: (experienceGained: number) => void;
+  onReturnHome: () => void;
 }
 
-function MonsterFight({ character, onFightEnd }: Props) {
+// Add descriptions for each monster
+const monsterDescriptions: { [key: string]: string } = {
+  "Cave Rat": "A large, vicious rodent that dwells in dark caverns. Its beady eyes gleam with malice.",
+  "Goblin": "A small, green-skinned creature known for its mischievous nature and surprising strength.",
+  "Giant Spider": "A terrifying arachnid of enormous size, its web sticky and strong enough to trap the unwary.",
+  "Troll": "A lumbering beast with regenerative abilities, known for its brute strength and low intelligence.",
+  "Cyclops": "A one-eyed giant of Greek mythology, powerful but with poor depth perception.",
+  "Troll Champion": "The mightiest of trolls, battle-hardened and far more cunning than its lesser kin.",
+  "Dragon": "A majestic and terrifying creature of legend, breathing fire and possessing ancient wisdom.",
+  "Dragon Lord": "The most powerful of dragons, commanding respect and fear from all who behold it."
+};
+
+function MonsterFight({ character, onFightEnd, onReturnHome }: Props) {
   const [selectedMonster, setSelectedMonster] = useState<Monster | null>(null);
   const [fightLog, setFightLog] = useState<string[]>([]);
+  const [isFighting, setIsFighting] = useState(false);
 
   const selectMonster = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const monster = monsters.find(m => m.name === event.target.value);
     setSelectedMonster(monster || null);
     setFightLog([]);
+    setIsFighting(false);
   };
 
   const generateCommentary = (attacker: string, defender: string, damage: number, remainingHealth: number): string => {
@@ -81,34 +96,43 @@ function MonsterFight({ character, onFightEnd }: Props) {
     }
 
     setFightLog(log);
+    setIsFighting(true);
   };
 
   return (
     <div>
       <h2>Monster Fight</h2>
-      <div>
-        <select onChange={selectMonster} value={selectedMonster?.name || ''}>
-          <option value="">Select a monster</option>
-          {monsters.map((monster) => (
-            <option key={monster.name} value={monster.name}>
-              {monster.name} (Level {monster.level})
-            </option>
-          ))}
-        </select>
-      </div>
-      {selectedMonster && (
+      {!isFighting ? (
         <div>
-          <h3>Selected Monster: {selectedMonster.name}</h3>
-          <p>Level: {selectedMonster.level}</p>
-          <p>Health: {selectedMonster.health}</p>
-          <p>Attack: {selectedMonster.attack}</p>
-          <p>Defense: {selectedMonster.defense}</p>
-          <button onClick={fight}>Start Fight</button>
+          <select onChange={selectMonster} value={selectedMonster?.name || ''}>
+            <option value="">Select a monster</option>
+            {monsters.map((monster) => (
+              <option key={monster.name} value={monster.name}>
+                {monster.name} (Level {monster.level})
+              </option>
+            ))}
+          </select>
+          {selectedMonster && (
+            <div>
+              <h3>Selected Monster: {selectedMonster.name}</h3>
+              <p>{monsterDescriptions[selectedMonster.name]}</p>
+              <p>Level: {selectedMonster.level}</p>
+              <p>Health: {selectedMonster.health}</p>
+              <p>Attack: {selectedMonster.attack}</p>
+              <p>Defense: {selectedMonster.defense}</p>
+              <button onClick={fight}>Start Fight</button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <h3>Battle Results</h3>
+          <div style={{ whiteSpace: 'pre-line', marginTop: '20px' }}>
+            {fightLog.join('\n')}
+          </div>
+          <button onClick={onReturnHome}>Return Home</button>
         </div>
       )}
-      <div style={{ whiteSpace: 'pre-line', marginTop: '20px' }}>
-        {fightLog.join('\n')}
-      </div>
     </div>
   );
 }
