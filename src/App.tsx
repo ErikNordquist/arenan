@@ -5,7 +5,7 @@ import SkillAllocation from './components/SkillAllocation';
 import Home from './components/Home';
 import { Character, Skills, calculateLevel } from './models/Character';
 
-const GOOGLE_CLIENT_ID = 'your-updated-client-id-if-changed';
+const GOOGLE_CLIENT_ID = '484170023639-g2unv8c40i5005irg7g9ppv9ukchls0f.apps.googleusercontent.com';
 
 function App() {
   const [user, setUser] = useState<any>(null);
